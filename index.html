@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>watchmap</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <img class="brand-mark" src="./navi.png" alt="" aria-hidden="true">
+          <div>
+            <h1>Watchmap</h1>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <div class="topbar-actions">
+            <div class="theme-switch" role="group" aria-label="테마">
+              <button type="button" data-theme-option="light">라이트</button>
+              <button type="button" data-theme-option="dark">다크</button>
+            </div>
+            <button id="quickDropboxSaveButton" class="quick-save-button" type="button" title="Dropbox 지금 저장" aria-label="Dropbox 지금 저장">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M15.2 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.8a2 2 0 0 0-.6-1.4l-3.8-3.8A2 2 0 0 0 15.2 3Z"></path>
+                <path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"></path>
+                <path d="M7 3v4a1 1 0 0 0 1 1h7"></path>
+              </svg>
+            </button>
+          </div>
+          <details class="sync-panel">
+            <summary>연결 / 데이터</summary>
+            <div class="sync-panel-body">
+              <div class="topbar-token">
+                <input id="tmdbTokenInput" type="password" placeholder="TMDb 토큰">
+                <button id="saveTokenButton" type="button">저장</button>
+                <button id="clearTokenButton" class="ghost-button danger" type="button">삭제</button>
+                <span id="tokenPill" class="status-pill warn">TMDb 토큰 필요</span>
+              </div>
+              <div class="topbar-json">
+                <button class="ghost-button" id="exportJsonButton" type="button">JSON 내보내기</button>
+                <label class="file-button">
+                  JSON 가져오기
+                  <input id="importJsonInput" type="file" accept="application/json">
+                </label>
+              </div>
+              <div class="topbar-dropbox">
+                <button id="dropboxConnectButton" type="button">Dropbox 연결</button>
+                <button id="dropboxReconnectButton" class="ghost-button" type="button">다시 연결</button>
+                <button id="dropboxLoadButton" class="ghost-button" type="button">불러오기</button>
+                <button id="dropboxSaveButton" class="ghost-button" type="button">지금 저장</button>
+                <button id="dropboxDisconnectButton" class="ghost-button danger" type="button">연결 해제</button>
+              </div>
+              <div id="dropboxStatus" class="inline-message"></div>
+            </div>
+          </details>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <div class="sidebar-column">
+          <section class="panel search-panel" aria-labelledby="searchTitle">
+            <div class="panel-heading">
+              <div>
+                <h2 id="searchTitle">검색</h2>
+              </div>
+            </div>
+
+            <div class="search-row">
+              <input id="searchQuery" type="search" placeholder="시리즈나 영화 제목" autocomplete="off">
+              <button id="searchButton" type="button">검색</button>
+            </div>
+
+            <div class="segmented" role="group" aria-label="검색 범위">
+              <button class="segment active" type="button" data-search-type="multi">전체</button>
+              <button class="segment" type="button" data-search-type="tv">시리즈</button>
+              <button class="segment" type="button" data-search-type="movie">영화</button>
+            </div>
+
+            <div id="searchMessage" class="inline-message"></div>
+            <div id="searchResults" class="result-list"></div>
+          </section>
+
+          <aside class="panel settings-panel" aria-labelledby="settingsTitle">
+            <div class="panel-heading">
+              <div>
+                <h2 id="settingsTitle">설정</h2>
+              </div>
+            </div>
+
+            <div class="settings-block">
+              <label class="field-label" for="startDateInput">시작일</label>
+              <input id="startDateInput" type="date">
+            </div>
+
+            <div class="settings-block">
+              <div class="field-label">시청 규칙</div>
+              <div class="rule-date-row">
+                <label>
+                  <span>시작일</span>
+                  <input id="ruleStartInput" type="date">
+                </label>
+                <label>
+                  <span>종료일</span>
+                  <input id="ruleEndInput" type="date" aria-label="종료일, 비우면 계속">
+                </label>
+              </div>
+              <div class="field-label small-label">요일별 시청 가능 시간(분)</div>
+              <div id="weekdayInputs" class="weekday-grid"></div>
+              <div class="rule-actions">
+                <button id="saveRuleButton" type="button">규칙 추가</button>
+                <button id="cancelRuleEditButton" class="ghost-button" type="button" hidden>취소</button>
+              </div>
+              <div id="settingsMessage" class="inline-message"></div>
+              <div class="rule-list-section">
+                <div class="field-label">시청 규칙</div>
+                <div id="ruleList" class="rule-list"></div>
+              </div>
+            </div>
+
+            <div class="settings-block">
+              <div class="field-label">시청 불가 기간</div>
+              <div class="blackout-row">
+                <input id="blackoutStartInput" type="date" aria-label="시작일">
+                <input id="blackoutEndInput" type="date" aria-label="종료일">
+                <button id="addBlackoutButton" type="button">추가</button>
+              </div>
+              <div id="blackoutList" class="blackout-list"></div>
+            </div>
+          </aside>
+        </div>
+
+        <div class="content-column">
+          <section class="panel queue-panel" aria-labelledby="queueTitle">
+            <div class="panel-heading">
+              <div>
+                <h2 id="queueTitle">목록</h2>
+                <span id="queueMeta" class="muted"></span>
+              </div>
+              <button id="clearQueueButton" class="ghost-button danger" type="button">비우기</button>
+            </div>
+            <div id="backlogList" class="backlog-list"></div>
+          </section>
+
+          <section class="panel plan-panel" aria-labelledby="planTitle">
+            <div class="panel-heading">
+              <div>
+                <h2 id="planTitle">계산 결과</h2>
+                <span id="planMeta" class="muted"></span>
+              </div>
+            </div>
+
+            <div class="metric-grid">
+              <div class="metric">
+                <span>남은 시간</span>
+                <strong id="metricRemaining">0분</strong>
+              </div>
+              <div class="metric">
+                <span>예상 완료일</span>
+                <strong id="metricFinish">-</strong>
+              </div>
+              <div class="metric">
+                <span>달력 기준</span>
+                <strong id="metricDays">-</strong>
+              </div>
+            </div>
+
+            <div class="monthly-output">
+              <h3>월별 집계</h3>
+              <div id="monthlyList" class="monthly-list"></div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>
