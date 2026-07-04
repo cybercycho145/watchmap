@@ -39,6 +39,7 @@ let searchType = "multi";
 let searchResults = [];
 let searchBusy = false;
 let editingRuleId = "";
+let quickSaveMessageTimer = 0;
 
 const dom = {};
 
@@ -85,6 +86,7 @@ function bindDom() {
   dom.dropboxLoadButton = document.getElementById("dropboxLoadButton");
   dom.dropboxSaveButton = document.getElementById("dropboxSaveButton");
   dom.quickDropboxSaveButton = document.getElementById("quickDropboxSaveButton");
+  dom.quickSaveStatus = document.getElementById("quickSaveStatus");
   dom.dropboxDisconnectButton = document.getElementById("dropboxDisconnectButton");
   dom.dropboxStatus = document.getElementById("dropboxStatus");
   dom.exportJsonButton = document.getElementById("exportJsonButton");
@@ -187,7 +189,7 @@ function bindEvents() {
   });
   dom.dropboxLoadButton.addEventListener("click", loadFromDropbox);
   dom.dropboxSaveButton.addEventListener("click", saveToDropbox);
-  dom.quickDropboxSaveButton.addEventListener("click", saveToDropbox);
+  dom.quickDropboxSaveButton.addEventListener("click", () => saveToDropbox("quick"));
   dom.dropboxDisconnectButton.addEventListener("click", disconnectDropbox);
 
   dom.exportJsonButton.addEventListener("click", exportJson);
@@ -398,6 +400,9 @@ function renderDropboxState() {
   dom.dropboxLoadButton.disabled = !connected;
   dom.dropboxSaveButton.disabled = !connected;
   dom.quickDropboxSaveButton.disabled = !connected;
+  if (!connected) {
+    setQuickSaveMessage("");
+  }
   dom.dropboxDisconnectButton.disabled = !connected;
   if (!dom.dropboxStatus.textContent) {
     setDropboxMessage(connected ? "Dropbox 연결됨" : "Dropbox 연결 안 됨", connected ? "ok" : "");
@@ -974,7 +979,11 @@ async function handleDropboxRedirect() {
   }
 }
 
-async function saveToDropbox() {
+async function saveToDropbox(source = "panel") {
+  const fromQuickButton = source === "quick";
+  if (fromQuickButton) {
+    setQuickSaveMessage("저장 중...");
+  }
   setDropboxMessage("Dropbox에 저장 중...");
   try {
     const token = await getDropboxAccessToken();
@@ -998,8 +1007,14 @@ async function saveToDropbox() {
       throw new Error(`Dropbox 저장 실패: ${response.status}`);
     }
     setDropboxMessage("Dropbox에 저장했습니다.", "ok");
+    if (fromQuickButton) {
+      setQuickSaveMessage("저장됨", "ok", true);
+    }
   } catch (error) {
     setDropboxMessage(friendlyError(error), "error");
+    if (fromQuickButton) {
+      setQuickSaveMessage("저장 실패", "error", true);
+    }
   }
 }
 
@@ -1237,6 +1252,19 @@ function setMessage(element, text, type = "") {
 
 function setDropboxMessage(text, type = "") {
   setMessage(dom.dropboxStatus, text, type);
+}
+
+function setQuickSaveMessage(text, type = "", autoClear = false) {
+  if (!dom.quickSaveStatus) return;
+  window.clearTimeout(quickSaveMessageTimer);
+  dom.quickSaveStatus.textContent = text;
+  dom.quickSaveStatus.className = `quick-save-status ${type}`.trim();
+  if (autoClear && text) {
+    quickSaveMessageTimer = window.setTimeout(() => {
+      dom.quickSaveStatus.textContent = "";
+      dom.quickSaveStatus.className = "quick-save-status";
+    }, 2400);
+  }
 }
 
 function setStatus(text) {
